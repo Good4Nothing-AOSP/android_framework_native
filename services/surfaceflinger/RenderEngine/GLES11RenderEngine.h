@@ -30,6 +30,7 @@ namespace android {
 // ---------------------------------------------------------------------------
 
 class String8;
+class Mesh;
 
 class GLES11RenderEngine : public RenderEngine {
     GLuint mProtectedTexName;
@@ -43,7 +44,7 @@ protected:
     virtual ~GLES11RenderEngine();
 
     virtual void dump(String8& result);
-    virtual void setViewportAndProjection(size_t w, size_t h);
+    virtual void setViewportAndProjection(size_t vpw, size_t vph, size_t w, size_t h, bool yswap);
     virtual void setupLayerBlending(bool premultipliedAlpha, bool opaque, int alpha);
     virtual void setupDimLayerBlending(int alpha);
     virtual void setupLayerTexturing(size_t textureName, bool useFiltering, const float* textureMatrix);
@@ -51,10 +52,8 @@ protected:
     virtual void disableTexturing();
     virtual void disableBlending();
 
-    virtual void clearWithColor(const float vertices[][2], size_t count,
-        float red, float green, float blue, float alpha);
-
-    virtual void drawMesh2D(const float vertices[][2], const float texCoords[][2], size_t count);
+    virtual void fillWithColor(const Mesh& mesh, float r, float g, float b, float a) ;
+    virtual void drawMesh(const Mesh& mesh);
 
     virtual size_t getMaxTextureSize() const;
     virtual size_t getMaxViewportDims() const;

@@ -17,6 +17,7 @@
 package android.os;
 
 import android.os.IDumpstateListener;
+import android.os.IDumpstateToken;
 
 /**
   * Binder interface for the currently running dumpstate process.
@@ -25,9 +26,10 @@ import android.os.IDumpstateListener;
 interface IDumpstate {
 
     /*
-     * Sets the listener for dumpstate progress.
+     * Sets the listener for this dumpstate progress.
      *
-     * Returns true if the listener was set (it's like a Highlander: There Can be Only One).
+     * Returns a token used to monitor dumpstate death, or `nullptr` if the listener was already
+     * set (the listener behaves like a Highlander: There Can be Only One).
      */
-    boolean setListener(@utf8InCpp String name, IDumpstateListener listener);
+    IDumpstateToken setListener(@utf8InCpp String name, IDumpstateListener listener);
 }

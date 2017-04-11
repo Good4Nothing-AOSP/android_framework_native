@@ -1,0 +1,34 @@
+This directory contains OpenGL ES and EGL extension specifications that have
+been or are being defined for Android.
+
+The table below tracks usage of EGL enumerant values that have been reserved
+for use by Android extensions.
+
+     Value                       Extension
+----------------     ----------------------------------
+0x3140               EGL_NATIVE_BUFFER_ANDROID (EGL_ANDROID_image_native_buffer)
+0x3141               EGL_PLATFORM_ANDROID_KHR (KHR_platform_android)
+0x3142               EGL_RECORDABLE_ANDROID (EGL_ANDROID_recordable)
+0x3144               EGL_SYNC_NATIVE_FENCE_ANDROID (EGL_ANDROID_native_fence_sync)
+0x3145               EGL_SYNC_NATIVE_FENCE_FD_ANDROID (EGL_ANDROID_native_fence_sync)
+0x3146               EGL_SYNC_NATIVE_FENCE_SIGNALED_ANDROID (EGL_ANDROID_native_fence_sync)
+0x3147               EGL_FRAMEBUFFER_TARGET_ANDROID (EGL_ANDROID_framebuffer_target)
+0x3148               EGL_IMAGE_CROP_LEFT_ANDROID (EGL_ANDROID_image_crop)
+0x3149               EGL_IMAGE_CROP_TOP_ANDROID (EGL_ANDROID_image_crop)
+0x314A               EGL_IMAGE_CROP_RIGHT_ANDROID (EGL_ANDROID_image_crop)
+0x314B               EGL_IMAGE_CROP_BOTTOM_ANDROID (EGL_ANDROID_image_crop)
+0x314C               EGL_FRONT_BUFFER_AUTO_REFRESH_ANDROID (EGL_ANDROID_front_buffer_auto_refresh)
+0x314D               EGL_TIMESTAMPS_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x314E               EGL_COMPOSITE_DEADLINE_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x314F               EGL_COMPOSITE_INTERVAL_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3150               EGL_COMPOSITE_TO_PRESENT_LATENCY_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3151               EGL_REQUESTED_PRESENT_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3152               EGL_RENDERING_COMPLETE_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3153               EGL_COMPOSITION_LATCH_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3154               EGL_FIRST_COMPOSITION_START_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3155               EGL_LAST_COMPOSITION_START_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3156               EGL_FIRST_COMPOSITION_GPU_FINISHED_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3157               EGL_DISPLAY_PRESENT_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3158               EGL_DEQUEUE_READY_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x3159               EGL_READS_DONE_TIME_ANDROID (EGL_ANDROID_get_frame_timestamps)
+0x315A - 0x315F      (unused)

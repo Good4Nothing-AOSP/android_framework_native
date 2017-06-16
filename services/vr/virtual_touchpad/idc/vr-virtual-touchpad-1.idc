@@ -18,6 +18,13 @@ device.internal = 1
 
 touch.deviceType = touchScreen
 
+# Have input flinger treat injected scroll events like a G1 ball
+# rather than the default mouse wheel, because the latter requires
+# a visible pointer for targeting.
+device.type = rotaryEncoder
+device.res = 1.0e+2
+device.scalingFactor = 1.0e-2
+
 # This displayID matches the unique ID of the virtual display created for VR.
 # This will indicate to input flinger than it should link this input device
 # with the virtual display.

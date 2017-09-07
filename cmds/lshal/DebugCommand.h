@@ -21,6 +21,7 @@
 
 #include <android-base/macros.h>
 
+#include "Command.h"
 #include "utils.h"
 
 namespace android {
@@ -28,14 +29,14 @@ namespace lshal {
 
 class Lshal;
 
-class DebugCommand {
+class DebugCommand : public Command {
 public:
-    DebugCommand(Lshal &lshal);
-    Status main(const std::string &command, const Arg &arg);
+    DebugCommand(Lshal &lshal) : Command(lshal) {}
+    ~DebugCommand() = default;
+    Status main(const std::string &command, const Arg &arg) override;
 private:
     Status parseArgs(const std::string &command, const Arg &arg);
 
-    Lshal &mLshal;
     std::string mInterfaceName;
     std::vector<std::string> mOptions;
 

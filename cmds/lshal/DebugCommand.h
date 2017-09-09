@@ -33,9 +33,10 @@ class DebugCommand : public Command {
 public:
     DebugCommand(Lshal &lshal) : Command(lshal) {}
     ~DebugCommand() = default;
-    Status main(const std::string &command, const Arg &arg) override;
+    Status main(const Arg &arg) override;
+    void usage() const override;
 private:
-    Status parseArgs(const std::string &command, const Arg &arg);
+    Status parseArgs(const Arg &arg);
 
     std::string mInterfaceName;
     std::vector<std::string> mOptions;

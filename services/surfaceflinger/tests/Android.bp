@@ -44,6 +44,7 @@ cc_test {
 subdirs = [
     "fakehwc",
     "hwc2",
+    "unittests",
     "vsync",
     "waitforvsync",
 ]

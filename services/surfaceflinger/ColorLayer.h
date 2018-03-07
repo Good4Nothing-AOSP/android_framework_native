@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#ifndef ANDROID_COLOR_LAYER_H
-#define ANDROID_COLOR_LAYER_H
-
-#include <stdint.h>
 #include <sys/types.h>
 
-#include "Layer.h"
+#include <cstdint>
 
-// ---------------------------------------------------------------------------
+#include "Layer.h"
 
 namespace android {
 
@@ -40,8 +37,4 @@ public:
     void setPerFrameData(const sp<const DisplayDevice>& displayDevice) override;
 };
 
-// ---------------------------------------------------------------------------
-
-}; // namespace android
-
-#endif // ANDROID_COLOR_LAYER_H
+} // namespace android

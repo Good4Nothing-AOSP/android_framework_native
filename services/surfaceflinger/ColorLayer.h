@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#ifndef ANDROID_COLOR_LAYER_H
-#define ANDROID_COLOR_LAYER_H
-
-#include <stdint.h>
 #include <sys/types.h>
 
-#include "Layer.h"
+#include <cstdint>
 
-// ---------------------------------------------------------------------------
+#include "Layer.h"
 
 namespace android {
 
@@ -36,36 +33,8 @@ public:
     virtual void onDraw(const RenderArea& renderArea, const Region& clip,
                         bool useIdentityTransform) const;
     bool isVisible() const override;
-    virtual bool isOpaque(const Layer::State&) const { return false; }
-    virtual bool isFixedSize() const { return true; }
 
-    void notifyAvailableFrames() override {}
-    PixelFormat getPixelFormat() const override { return PIXEL_FORMAT_NONE; }
-    uint32_t getEffectiveScalingMode() const override { return 0; }
-    void releasePendingBuffer(nsecs_t) override {}
-    Region latchBuffer(bool&, nsecs_t) override { return Region(); }
-    void useSurfaceDamage() override {}
-    void useEmptyDamage() override {}
-    bool isBufferLatched() const override { return false; }
-    bool onPreComposition(nsecs_t) override { return true; }
-    void abandon() override {}
     void setPerFrameData(const sp<const DisplayDevice>& displayDevice) override;
-    void setDefaultBufferSize(uint32_t /*w*/, uint32_t /*h*/) override {}
-    bool shouldPresentNow(const DispSync& /*dispSync*/) const override { return false; }
-    bool onPostComposition(const std::shared_ptr<FenceTime>& /*glDoneFence*/,
-                           const std::shared_ptr<FenceTime>& /*presentFence*/,
-                           const CompositorTiming& /*compositorTiming*/) override {
-        return false;
-    }
-    void setTransformHint(uint32_t /*orientation*/) const override {}
-    std::vector<OccupancyTracker::Segment> getOccupancyHistory(bool /*forceFlush*/) override {
-        return {};
-    }
-    bool getTransformToDisplayInverse() const override { return false; }
 };
 
-// ---------------------------------------------------------------------------
-
-}; // namespace android
-
-#endif // ANDROID_COLOR_LAYER_H
+} // namespace android

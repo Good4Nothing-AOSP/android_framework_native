@@ -38,7 +38,7 @@ public:
 
     bool setNativeWindowBuffer(ANativeWindowBuffer* buffer, bool isProtected) override;
 
-    EGLSurface getEGLImage() const { return mEGLImage; }
+    EGLImageKHR getEGLImage() const { return mEGLImage; }
 
 private:
     EGLDisplay mEGLDisplay;
@@ -47,6 +47,6 @@ private:
     DISALLOW_COPY_AND_ASSIGN(GLImage);
 };
 
-} // namespace gl
-} // namespace renderengine
-} // namespace android
+}  // namespace gl
+}  // namespace renderengine
+}  // namespace android

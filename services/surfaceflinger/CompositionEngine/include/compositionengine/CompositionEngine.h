@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace android {
 
 class HWComposer;
@@ -29,6 +31,9 @@ namespace compositionengine {
 class CompositionEngine {
 public:
     virtual ~CompositionEngine();
+
+    virtual HWComposer& getHwComposer() const = 0;
+    virtual void setHwComposer(std::unique_ptr<HWComposer>) = 0;
 };
 
 } // namespace compositionengine

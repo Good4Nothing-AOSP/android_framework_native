@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include <gmock/gmock.h>
-
 #include <compositionengine/Display.h>
+#include <compositionengine/mock/Output.h>
+#include <gmock/gmock.h>
 
 #include "DisplayHardware/DisplayIdentification.h"
 
 namespace android::compositionengine::mock {
 
-class Display : public compositionengine::Display {
+class Display : public compositionengine::mock::Output, public compositionengine::Display {
 public:
     Display();
     virtual ~Display();

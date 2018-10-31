@@ -17,8 +17,8 @@
 #ifndef ANDROID_FRAMEWORKS_BUFFERHUB_V1_0_BUFFER_HUB_SERVICE_H
 #define ANDROID_FRAMEWORKS_BUFFERHUB_V1_0_BUFFER_HUB_SERVICE_H
 
+#include <android/frameworks/bufferhub/1.0/IBufferClient.h>
 #include <android/frameworks/bufferhub/1.0/IBufferHub.h>
-#include <android/hardware/graphics/common/1.2/types.h>
 
 namespace android {
 namespace frameworks {
@@ -26,17 +26,16 @@ namespace bufferhub {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::sp;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::Return;
 using ::android::hardware::graphics::common::V1_2::HardwareBufferDescription;
-using ::android::hidl::base::V1_0::IBase;
 
 class BufferHubService : public IBufferHub {
 public:
-    Return<void> allocateBuffer(const HardwareBufferDescription& /*description*/,
-                                allocateBuffer_cb /*hidl_cb*/) override;
-    Return<sp<IBase>> importBuffer(const hidl_handle& /*nativeHandle*/) override;
+    Return<void> allocateBuffer(const HardwareBufferDescription& description,
+                                const uint32_t userMetadataSize,
+                                allocateBuffer_cb _hidl_cb) override;
+    Return<void> importBuffer(const hidl_handle& nativeHandle, importBuffer_cb _hidl_cb) override;
 };
 
 } // namespace implementation

@@ -22,16 +22,21 @@ namespace bufferhub {
 namespace V1_0 {
 namespace implementation {
 
-using ::android::status_t;
-using ::android::hardware::Void;
+using hardware::Void;
 
 Return<void> BufferHubService::allocateBuffer(const HardwareBufferDescription& /*description*/,
-                                              allocateBuffer_cb /*hidl_cb*/) {
+                                              const uint32_t /*userMetadataSize*/,
+                                              allocateBuffer_cb _hidl_cb) {
+    // TODO(b/118614333): implement buffer allocation
+    _hidl_cb(/*bufferClient=*/nullptr, /*status=*/BufferHubStatus::NO_ERROR);
     return Void();
 }
 
-Return<sp<IBase>> BufferHubService::importBuffer(const hidl_handle& /*nativeHandle*/) {
-    return nullptr;
+Return<void> BufferHubService::importBuffer(const hidl_handle& /*nativeHandle*/,
+                                            importBuffer_cb _hidl_cb) {
+    // TODO(b/118614157): implement buffer import
+    _hidl_cb(/*bufferClient=*/nullptr, /*status=*/BufferHubStatus::NO_ERROR);
+    return Void();
 }
 
 } // namespace implementation

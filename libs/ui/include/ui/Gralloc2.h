@@ -30,14 +30,13 @@
 
 namespace android {
 
-using hardware::graphics::allocator::V2_0::IAllocator;
-using hardware::graphics::mapper::V2_1::IMapper;
-
 class Gralloc2Mapper : public GrallocMapper {
 public:
     static void preload();
 
     Gralloc2Mapper();
+
+    bool isSupported() const override;
 
     status_t createDescriptor(void* bufferDescriptorInfo, void* outBufferDescriptor) const override;
 
@@ -63,10 +62,11 @@ public:
 
 private:
     // Determines whether the passed info is compatible with the mapper.
-    status_t validateBufferDescriptorInfo(IMapper::BufferDescriptorInfo* descriptorInfo) const;
+    status_t validateBufferDescriptorInfo(
+            hardware::graphics::mapper::V2_1::IMapper::BufferDescriptorInfo* descriptorInfo) const;
 
     sp<hardware::graphics::mapper::V2_0::IMapper> mMapper;
-    sp<IMapper> mMapperV2_1;
+    sp<hardware::graphics::mapper::V2_1::IMapper> mMapperV2_1;
 };
 
 class Gralloc2Allocator : public GrallocAllocator {
@@ -74,6 +74,8 @@ public:
     // An allocator relies on a mapper, and that mapper must be alive at all
     // time.
     Gralloc2Allocator(const Gralloc2Mapper& mapper);
+
+    bool isSupported() const override;
 
     std::string dumpDebugInfo() const override;
 
@@ -83,7 +85,7 @@ public:
 
 private:
     const Gralloc2Mapper& mMapper;
-    sp<IAllocator> mAllocator;
+    sp<hardware::graphics::allocator::V2_0::IAllocator> mAllocator;
 };
 
 } // namespace android

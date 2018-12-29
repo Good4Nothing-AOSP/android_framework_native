@@ -27,11 +27,13 @@
 #include <sync/sync.h>
 #pragma clang diagnostic pop
 
+using android::hardware::graphics::allocator::V2_0::IAllocator;
 using android::hardware::graphics::common::V1_1::BufferUsage;
 using android::hardware::graphics::common::V1_1::PixelFormat;
 using android::hardware::graphics::mapper::V2_0::BufferDescriptor;
 using android::hardware::graphics::mapper::V2_0::Error;
 using android::hardware::graphics::mapper::V2_0::YCbCrLayout;
+using android::hardware::graphics::mapper::V2_1::IMapper;
 
 namespace android {
 
@@ -81,7 +83,8 @@ void Gralloc2Mapper::preload() {
 Gralloc2Mapper::Gralloc2Mapper() {
     mMapper = hardware::graphics::mapper::V2_0::IMapper::getService();
     if (mMapper == nullptr) {
-        LOG_ALWAYS_FATAL("gralloc-mapper is missing");
+        ALOGW("mapper 2.x is not supported");
+        return;
     }
     if (mMapper->isRemote()) {
         LOG_ALWAYS_FATAL("gralloc-mapper must be in passthrough mode");
@@ -89,6 +92,10 @@ Gralloc2Mapper::Gralloc2Mapper() {
 
     // IMapper 2.1 is optional
     mMapperV2_1 = IMapper::castFrom(mMapper);
+}
+
+bool Gralloc2Mapper::isSupported() const {
+    return mMapper != nullptr;
 }
 
 status_t Gralloc2Mapper::validateBufferDescriptorInfo(
@@ -340,8 +347,13 @@ int Gralloc2Mapper::unlock(buffer_handle_t bufferHandle) const {
 Gralloc2Allocator::Gralloc2Allocator(const Gralloc2Mapper& mapper) : mMapper(mapper) {
     mAllocator = IAllocator::getService();
     if (mAllocator == nullptr) {
-        LOG_ALWAYS_FATAL("gralloc-alloc is missing");
+        ALOGW("allocator 2.x is not supported");
+        return;
     }
+}
+
+bool Gralloc2Allocator::isSupported() const {
+    return mAllocator != nullptr;
 }
 
 std::string Gralloc2Allocator::dumpDebugInfo() const {

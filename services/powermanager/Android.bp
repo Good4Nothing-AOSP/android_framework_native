@@ -1,0 +1,44 @@
+cc_library_shared {
+    name: "libpowermanager",
+
+    srcs: [
+        "BatterySaverPolicyConfig.cpp",
+        "CoolingDevice.cpp",
+        "PowerHalLoader.cpp",
+        "PowerHalWrapper.cpp",
+        "PowerSaveState.cpp",
+        "Temperature.cpp",
+        "WorkSource.cpp",
+        ":libpowermanager_aidl",
+    ],
+
+    aidl: {
+       local_include_dirs: ["include"],
+       include_dirs: [
+           "frameworks/base/core/java/android/os",
+       ],
+       export_aidl_headers: true
+    },
+
+    shared_libs: [
+        "libbinder",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "android.hardware.power@1.0",
+        "android.hardware.power@1.1",
+        "android.hardware.power-cpp",
+    ],
+
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wunused",
+        "-Wunreachable-code",
+    ],
+
+    local_include_dirs: ["include"],
+    export_include_dirs: [
+         "include",
+    ],
+}

@@ -16,6 +16,7 @@ rust_defaults {
     name: "libbufferstreams_defaults",
     srcs: ["src/lib.rs"],
     rustlibs: [
+        "libanyhow",
         "libnativewindow_rs",
     ],
     edition: "2021",

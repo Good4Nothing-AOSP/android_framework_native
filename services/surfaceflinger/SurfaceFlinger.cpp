@@ -2746,9 +2746,7 @@ bool SurfaceFlinger::commit(PhysicalDisplayId pacesetterId,
                 mScheduler->getVsyncSchedule()->getTracker().onFrameMissed(
                         pacesetterFrameTarget.expectedPresentTime());
             }
-            const Duration slack = FlagManager::getInstance().allow_n_vsyncs_in_targeter()
-                    ? TimePoint::now() - pacesetterFrameTarget.frameBeginTime()
-                    : Duration::fromNs(0);
+            const Duration slack = TimePoint::now() - pacesetterFrameTarget.frameBeginTime();
             scheduleCommit(FrameHint::kNone, slack);
             return false;
         }
@@ -4618,9 +4616,7 @@ void SurfaceFlinger::sendNotifyExpectedPresentHint(PhysicalDisplayId displayId) 
 }
 
 void SurfaceFlinger::onCommitNotComposited() {
-    if (FlagManager::getInstance().commit_not_composited()) {
-        mFrameTimeline->onCommitNotComposited();
-    }
+    mFrameTimeline->onCommitNotComposited();
 }
 
 void SurfaceFlinger::initScheduler(const sp<const DisplayDevice>& display) {
@@ -7261,6 +7257,12 @@ void SurfaceFlinger::vrrDisplayIdle(PhysicalDisplayId displayId, bool idle) {
     }));
 }
 
+void SurfaceFlinger::enableLayerCachingTexturePool(PhysicalDisplayId displayId, bool enable) {
+    if (const auto display = FTL_FAKE_GUARD(mStateLock, getDisplayDeviceLocked(displayId))) {
+        display->getCompositionDisplay()->setLayerCachingTexturePoolEnabled(enable);
+    }
+}
+
 auto SurfaceFlinger::getKernelIdleTimerProperties(PhysicalDisplayId displayId)
         -> std::pair<std::optional<KernelIdleTimerController>, std::chrono::milliseconds> {
     const bool isKernelIdleTimerHwcSupported = getHwComposer().getComposer()->isSupported(
@@ -7783,7 +7785,6 @@ status_t SurfaceFlinger::setScreenshotDisplayState(ScreenshotArgs& args) {
         }
 
         Rect layerStackSpaceRect = display->getLayerStackSpaceRect();
-        args.displayIdVariant = display->getDisplayIdVariant();
         args.isSecure &= display->isSecure();
         args.snapshotRequest.layerStack = display->getLayerStack();
         args.sourceCrop = layerStackSpaceRect;
@@ -7809,7 +7810,6 @@ status_t SurfaceFlinger::setScreenshotDisplayState(ScreenshotArgs& args) {
         }
 
         Rect layerStackSpaceRect = display->getLayerStackSpaceRect();
-        args.displayIdVariant = display->getDisplayIdVariant();
         args.isSecure &= display->isSecure();
         args.snapshotRequest.layerStack = display->getLayerStack();
 
@@ -7851,6 +7851,7 @@ status_t SurfaceFlinger::setScreenshotDisplayState(ScreenshotArgs& args) {
         args.colorMode = state.colorMode;
         args.debugName.append(", ").append(display->getDisplayName());
         args.debugName.append(" (").append(to_string(display->getId())).append(")");
+        args.displayIdVariant = display->getDisplayIdVariant();
         return OK;
     }
     ALOGD("Display state not found");
@@ -8446,12 +8447,14 @@ void SurfaceFlinger::onNewFrontInternalDisplay(const DisplayDevice* oldFrontInte
     sFrontInternalDisplayRotationFlags =
             ui::Transform::toRotationFlags(newFrontInternalDisplay.getOrientation());
 
-    if (oldFrontInternalDisplayPtr) {
-        oldFrontInternalDisplayPtr->getCompositionDisplay()->setLayerCachingTexturePoolEnabled(
-                false);
-    }
+    if (!FlagManager::getInstance().pacesetter_selection()) {
+        if (oldFrontInternalDisplayPtr) {
+            oldFrontInternalDisplayPtr->getCompositionDisplay()->setLayerCachingTexturePoolEnabled(
+                    false);
+        }
 
-    newFrontInternalDisplay.getCompositionDisplay()->setLayerCachingTexturePoolEnabled(true);
+        newFrontInternalDisplay.getCompositionDisplay()->setLayerCachingTexturePoolEnabled(true);
+    }
 
     // TODO(b/255635711): Check for pending mode changes on other displays.
     mScheduler->setModeChangePending(false);

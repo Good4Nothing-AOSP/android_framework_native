@@ -533,7 +533,8 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
     mRefreshRateOverlayShowInMiddle =
             property_get_bool("debug.sf.show_refresh_rate_overlay_in_middle", 0);
 
-    if (!mIsUserBuild && base::GetBoolProperty("debug.sf.enable_transaction_tracing"s, true)) {
+    if (base::GetBoolProperty("ro.debuggable", false) &&
+        base::GetBoolProperty("debug.sf.enable_transaction_tracing"s, true)) {
         mTransactionTracing.emplace();
         mLayerTracing.setTransactionTracing(*mTransactionTracing);
     }
@@ -1373,7 +1374,7 @@ status_t SurfaceFlinger::getDisplayStats(const sp<IBinder>& displayToken,
     return NO_ERROR;
 }
 
-void SurfaceFlinger::setDesiredMode(display::DisplayModeRequest&& desiredMode) {
+void SurfaceFlinger::setDesiredMode(display::DisplayModeRequest desiredMode) {
     const auto mode = desiredMode.mode;
     const auto displayId = mode.modePtr->getPhysicalDisplayId();
 
@@ -4485,7 +4486,7 @@ void SurfaceFlinger::requestDisplayModes(std::vector<display::DisplayModeRequest
         if (!display) continue;
 
         if (display->refreshRateSelector().isModeAllowed(request.mode)) {
-            setDesiredMode(std::move(request));
+            setDesiredMode(request);
         } else {
             ALOGV("%s: Mode %d is disallowed for display %s", __func__,
                   ftl::to_underlying(modePtr->getId()), to_string(displayId).c_str());
@@ -5053,11 +5054,10 @@ bool SurfaceFlinger::shouldLatchUnsignaled(const layer_state_t& state, size_t nu
 }
 
 status_t SurfaceFlinger::setTransactionState(
-        const FrameTimelineInfo& frameTimelineInfo, Vector<ComposerState>& states,
-        Vector<DisplayState>& displays, uint32_t flags, const sp<IBinder>& applyToken,
-        InputWindowCommands inputWindowCommands, int64_t desiredPresentTime, bool isAutoTimestamp,
-        const std::vector<client_cache_t>& uncacheBuffers, bool hasListenerCallbacks,
-        const std::vector<ListenerCallbacks>& listenerCallbacks, uint64_t transactionId,
+        SimpleTransactionState podState, const FrameTimelineInfo& frameTimelineInfo,
+        Vector<ComposerState>& states, Vector<DisplayState>& displays,
+        const sp<IBinder>& applyToken, const std::vector<client_cache_t>& uncacheBuffers,
+        const TransactionListenerCallbacks& listenerCallbacks,
         const std::vector<uint64_t>& mergedTransactionIds,
         const std::vector<gui::EarlyWakeupInfo>& earlyWakeupInfos) {
     SFTRACE_CALL();
@@ -5081,11 +5081,13 @@ status_t SurfaceFlinger::setTransactionState(
         display.sanitize(permissions);
     }
 
-    if (!inputWindowCommands.empty() &&
+    if (!podState.mInputWindowCommands.empty() &&
         (permissions & layer_state_t::Permission::ACCESS_SURFACE_FLINGER) == 0) {
         ALOGE("Only privileged callers are allowed to send input commands.");
-        inputWindowCommands.clear();
+        podState.mInputWindowCommands.clear();
     }
+
+    uint32_t flags = podState.mFlags;
 
     if (flags & (eEarlyWakeupStart | eEarlyWakeupEnd)) {
         const bool hasPermission =
@@ -5126,7 +5128,7 @@ status_t SurfaceFlinger::setTransactionState(
                     (layer) ? layer->getDebugName() : std::to_string(resolvedState.state.layerId);
             resolvedState.externalTexture =
                     getExternalTextureFromBufferData(*resolvedState.state.bufferData,
-                                                     layerName.c_str(), transactionId);
+                                                     layerName.c_str(), podState.mId);
             if (resolvedState.externalTexture) {
                 resolvedState.state.bufferData->buffer = resolvedState.externalTexture->getBuffer();
                 if (FlagManager::getInstance().monitor_buffer_fences()) {
@@ -5159,16 +5161,16 @@ status_t SurfaceFlinger::setTransactionState(
                                  displays,
                                  flags,
                                  applyToken,
-                                 std::move(inputWindowCommands),
-                                 desiredPresentTime,
-                                 isAutoTimestamp,
+                                 std::move(podState.mInputWindowCommands),
+                                 podState.mDesiredPresentTime,
+                                 podState.mIsAutoTimestamp,
                                  std::move(uncacheBufferIds),
                                  postTime,
-                                 hasListenerCallbacks,
-                                 listenerCallbacks,
+                                 listenerCallbacks.mHasListenerCallbacks,
+                                 listenerCallbacks.mFlattenedListenerCallbacks,
                                  originPid,
                                  originUid,
-                                 transactionId,
+                                 podState.mId,
                                  mergedTransactionIds,
                                  earlyWakeupInfos};
     state.workloadHint = queuedWorkload;
@@ -8196,8 +8198,12 @@ status_t SurfaceFlinger::applyRefreshRateSelectorPolicy(
     const scheduler::RefreshRateSelector::Policy currentPolicy = selector.getCurrentPolicy();
     ALOGV("Setting desired display mode specs: %s", currentPolicy.toString().c_str());
 
-    if (mScheduler->onDisplayModeChanged(displayId, selector.getActiveMode(),
-                                         /*clearContentRequirements*/ true)) {
+    const auto isPacesetter = FlagManager::getInstance().unify_refresh_rate_callbacks()
+            ? mScheduler->updatePolicyContentRequirements(displayId, selector.getActiveMode(),
+                                                          /*clearContentRequirements*/ true)
+            : mScheduler->onDisplayModeChanged(displayId, selector.getActiveMode(),
+                                               /*clearContentRequirements*/ true);
+    if (isPacesetter) {
         mDisplayModeController.updateKernelIdleTimer(displayId);
     }
 
@@ -8219,7 +8225,16 @@ status_t SurfaceFlinger::applyRefreshRateSelectorPolicy(
         return INVALID_OPERATION;
     }
 
-    setDesiredMode({std::move(preferredMode), .emitEvent = true});
+    if (FlagManager::getInstance().unify_refresh_rate_callbacks() &&
+        mScheduler->updateFrameRateOverrides(scheduler::GlobalSignals{}, preferredFps)) {
+        setDesiredMode({preferredMode, .emitEvent = false});
+        // Update the frameRateOverride and display mode change.
+        mScheduler->onDisplayModeAndFrameRateOverridesChanged(displayId, preferredMode,
+                                                              /*clearContentRequirements*/ false);
+        return NO_ERROR;
+    }
+
+    setDesiredMode({preferredMode, .emitEvent = true});
 
     // Update the frameRateOverride list as the display render rate might have changed
     mScheduler->updateFrameRateOverrides(scheduler::GlobalSignals{}, preferredFps);

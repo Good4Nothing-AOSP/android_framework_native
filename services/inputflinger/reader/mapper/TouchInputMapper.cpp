@@ -1814,14 +1814,15 @@ std::list<NotifyArgs> TouchInputMapper::abortTouches(
     if (!currentIdBits.isEmpty()) {
         int32_t metaState = getContext()->getGlobalMetaState();
         int32_t buttonState = mCurrentCookedState.buttonState;
-        out.push_back(dispatchMotion(when, readTime, policyFlags,
+        out.push_back(dispatchMotion(when, readTime, policyFlags, mSource,
                                      currentGestureDisplayId.value_or(resolveDisplayId()),
                                      AMOTION_EVENT_ACTION_CANCEL, 0, AMOTION_EVENT_FLAG_CANCELED,
                                      metaState, buttonState,
                                      mCurrentCookedState.cookedPointerData.pointerProperties,
                                      mCurrentCookedState.cookedPointerData.pointerCoords,
                                      mCurrentCookedState.cookedPointerData.idToIndex, currentIdBits,
-                                     -1));
+                                     -1, mOrientedXPrecision, mOrientedYPrecision, mDownTime,
+                                     MotionClassification::NONE));
         mCurrentMotionAborted = true;
     }
     return out;
@@ -1869,12 +1870,14 @@ std::list<NotifyArgs> TouchInputMapper::dispatchTouches(nsecs_t when, nsecs_t re
         if (!currentIdBits.isEmpty()) {
             // No pointer id changes so this is a move event.
             // The listener takes care of batching moves so we don't have to deal with that here.
-            out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+            out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                          AMOTION_EVENT_ACTION_MOVE, 0, 0, metaState, buttonState,
                                          mCurrentCookedState.cookedPointerData.pointerProperties,
                                          mCurrentCookedState.cookedPointerData.pointerCoords,
                                          mCurrentCookedState.cookedPointerData.idToIndex,
-                                         currentIdBits, -1));
+                                         currentIdBits, -1, mOrientedXPrecision,
+                                         mOrientedYPrecision, mDownTime,
+                                         MotionClassification::NONE));
         }
     } else {
         // There may be pointers going up and pointers going down and pointers moving
@@ -1904,14 +1907,16 @@ std::list<NotifyArgs> TouchInputMapper::dispatchTouches(nsecs_t when, nsecs_t re
             if (isCanceled) {
                 ALOGI("Canceling pointer %d for the palm event was detected.", upId);
             }
-            out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+            out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                          AMOTION_EVENT_ACTION_POINTER_UP, 0,
                                          isCanceled ? AMOTION_EVENT_FLAG_CANCELED : 0, metaState,
                                          buttonState,
                                          mLastCookedState.cookedPointerData.pointerProperties,
                                          mLastCookedState.cookedPointerData.pointerCoords,
                                          mLastCookedState.cookedPointerData.idToIndex,
-                                         dispatchedIdBits, upId));
+                                         dispatchedIdBits, upId, mOrientedXPrecision,
+                                         mOrientedYPrecision, mDownTime,
+                                         MotionClassification::NONE));
             dispatchedIdBits.clearBit(upId);
             mCurrentCookedState.cookedPointerData.canceledIdBits.clearBit(upId);
         }
@@ -1921,12 +1926,14 @@ std::list<NotifyArgs> TouchInputMapper::dispatchTouches(nsecs_t when, nsecs_t re
         // events, they do not generally handle them except when presented in a move event.
         if (moveNeeded && !moveIdBits.isEmpty()) {
             ALOG_ASSERT(moveIdBits.value == dispatchedIdBits.value);
-            out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+            out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                          AMOTION_EVENT_ACTION_MOVE, 0, 0, metaState, buttonState,
                                          mCurrentCookedState.cookedPointerData.pointerProperties,
                                          mCurrentCookedState.cookedPointerData.pointerCoords,
                                          mCurrentCookedState.cookedPointerData.idToIndex,
-                                         dispatchedIdBits, -1));
+                                         dispatchedIdBits, -1, mOrientedXPrecision,
+                                         mOrientedYPrecision, mDownTime,
+                                         MotionClassification::NONE));
         }
 
         // Dispatch pointer down events using the new pointer locations.
@@ -1940,12 +1947,13 @@ std::list<NotifyArgs> TouchInputMapper::dispatchTouches(nsecs_t when, nsecs_t re
             }
 
             out.push_back(
-                    dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+                    dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                    AMOTION_EVENT_ACTION_POINTER_DOWN, 0, 0, metaState, buttonState,
                                    mCurrentCookedState.cookedPointerData.pointerProperties,
                                    mCurrentCookedState.cookedPointerData.pointerCoords,
                                    mCurrentCookedState.cookedPointerData.idToIndex,
-                                   dispatchedIdBits, downId));
+                                   dispatchedIdBits, downId, mOrientedXPrecision,
+                                   mOrientedYPrecision, mDownTime, MotionClassification::NONE));
         }
     }
     return out;
@@ -1958,13 +1966,15 @@ std::list<NotifyArgs> TouchInputMapper::dispatchHoverExit(nsecs_t when, nsecs_t 
         (mCurrentCookedState.cookedPointerData.hoveringIdBits.isEmpty() ||
          !mCurrentCookedState.cookedPointerData.touchingIdBits.isEmpty())) {
         int32_t metaState = getContext()->getGlobalMetaState();
-        out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+        out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                      AMOTION_EVENT_ACTION_HOVER_EXIT, 0, 0, metaState,
                                      mLastCookedState.buttonState,
                                      mLastCookedState.cookedPointerData.pointerProperties,
                                      mLastCookedState.cookedPointerData.pointerCoords,
                                      mLastCookedState.cookedPointerData.idToIndex,
-                                     mLastCookedState.cookedPointerData.hoveringIdBits, -1));
+                                     mLastCookedState.cookedPointerData.hoveringIdBits, -1,
+                                     mOrientedXPrecision, mOrientedYPrecision, mDownTime,
+                                     MotionClassification::NONE));
         mSentHoverEnter = false;
     }
     return out;
@@ -1977,23 +1987,27 @@ std::list<NotifyArgs> TouchInputMapper::dispatchHoverEnterAndMove(nsecs_t when, 
         !mCurrentCookedState.cookedPointerData.hoveringIdBits.isEmpty()) {
         int32_t metaState = getContext()->getGlobalMetaState();
         if (!mSentHoverEnter) {
-            out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+            out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                          AMOTION_EVENT_ACTION_HOVER_ENTER, 0, 0, metaState,
                                          mCurrentRawState.buttonState,
                                          mCurrentCookedState.cookedPointerData.pointerProperties,
                                          mCurrentCookedState.cookedPointerData.pointerCoords,
                                          mCurrentCookedState.cookedPointerData.idToIndex,
-                                         mCurrentCookedState.cookedPointerData.hoveringIdBits, -1));
+                                         mCurrentCookedState.cookedPointerData.hoveringIdBits, -1,
+                                         mOrientedXPrecision, mOrientedYPrecision, mDownTime,
+                                         MotionClassification::NONE));
             mSentHoverEnter = true;
         }
 
-        out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+        out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                      AMOTION_EVENT_ACTION_HOVER_MOVE, 0, 0, metaState,
                                      mCurrentRawState.buttonState,
                                      mCurrentCookedState.cookedPointerData.pointerProperties,
                                      mCurrentCookedState.cookedPointerData.pointerCoords,
                                      mCurrentCookedState.cookedPointerData.idToIndex,
-                                     mCurrentCookedState.cookedPointerData.hoveringIdBits, -1));
+                                     mCurrentCookedState.cookedPointerData.hoveringIdBits, -1,
+                                     mOrientedXPrecision, mOrientedYPrecision, mDownTime,
+                                     MotionClassification::NONE));
     }
     return out;
 }
@@ -2008,12 +2022,14 @@ std::list<NotifyArgs> TouchInputMapper::dispatchButtonRelease(nsecs_t when, nsec
     while (!releasedButtons.isEmpty()) {
         int32_t actionButton = BitSet32::valueForBit(releasedButtons.clearFirstMarkedBit());
         buttonState &= ~actionButton;
-        out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+        out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                      AMOTION_EVENT_ACTION_BUTTON_RELEASE, actionButton, 0,
                                      metaState, buttonState,
                                      mLastCookedState.cookedPointerData.pointerProperties,
                                      mLastCookedState.cookedPointerData.pointerCoords,
-                                     mLastCookedState.cookedPointerData.idToIndex, idBits, -1));
+                                     mLastCookedState.cookedPointerData.idToIndex, idBits, -1,
+                                     mOrientedXPrecision, mOrientedYPrecision, mDownTime,
+                                     MotionClassification::NONE));
     }
     return out;
 }
@@ -2028,12 +2044,14 @@ std::list<NotifyArgs> TouchInputMapper::dispatchButtonPress(nsecs_t when, nsecs_
     while (!pressedButtons.isEmpty()) {
         int32_t actionButton = BitSet32::valueForBit(pressedButtons.clearFirstMarkedBit());
         buttonState |= actionButton;
-        out.push_back(dispatchMotion(when, readTime, policyFlags, resolveDisplayId(),
+        out.push_back(dispatchMotion(when, readTime, policyFlags, mSource, resolveDisplayId(),
                                      AMOTION_EVENT_ACTION_BUTTON_PRESS, actionButton, 0, metaState,
                                      buttonState,
                                      mCurrentCookedState.cookedPointerData.pointerProperties,
                                      mCurrentCookedState.cookedPointerData.pointerCoords,
-                                     mCurrentCookedState.cookedPointerData.idToIndex, idBits, -1));
+                                     mCurrentCookedState.cookedPointerData.idToIndex, idBits, -1,
+                                     mOrientedXPrecision, mOrientedYPrecision, mDownTime,
+                                     MotionClassification::NONE));
     }
     return out;
 }
@@ -2270,10 +2288,12 @@ void TouchInputMapper::cookPointerData() {
 }
 
 NotifyMotionArgs TouchInputMapper::dispatchMotion(
-        nsecs_t when, nsecs_t readTime, uint32_t policyFlags, ui::LogicalDisplayId displayId,
-        int32_t action, int32_t actionButton, int32_t flags, int32_t metaState, int32_t buttonState,
-        const PropertiesArray& properties, const CoordsArray& coords,
-        const IdToIndexArray& idToIndex, BitSet32 idBits, int32_t changedId) const {
+        nsecs_t when, nsecs_t readTime, uint32_t policyFlags, uint32_t source,
+        ui::LogicalDisplayId displayId, int32_t action, int32_t actionButton, int32_t flags,
+        int32_t metaState, int32_t buttonState, const PropertiesArray& properties,
+        const CoordsArray& coords, const IdToIndexArray& idToIndex, BitSet32 idBits,
+        int32_t changedId, float xPrecision, float yPrecision, nsecs_t downTime,
+        MotionClassification classification) const {
     std::vector<PointerCoords> pointerCoords;
     std::vector<PointerProperties> pointerProperties;
     uint32_t pointerCount = 0;
@@ -2309,7 +2329,6 @@ NotifyMotionArgs TouchInputMapper::dispatchMotion(
             ALOG_ASSERT(false);
         }
     }
-    uint32_t source = mSource;
     if (mCurrentStreamModifiedByExternalStylus) {
         source |= AINPUT_SOURCE_BLUETOOTH_STYLUS;
     }
@@ -2336,9 +2355,9 @@ NotifyMotionArgs TouchInputMapper::dispatchMotion(
                   [this](TouchVideoFrame& frame) { frame.rotate(this->mInputDeviceOrientation); });
     return NotifyMotionArgs(getContext()->getNextId(), when, readTime, deviceId, source, displayId,
                             policyFlags, action, actionButton, flags, metaState, buttonState,
-                            MotionClassification::NONE, pointerCount, pointerProperties.data(),
-                            pointerCoords.data(), mOrientedXPrecision, mOrientedYPrecision,
-                            xCursorPosition, yCursorPosition, mDownTime, std::move(frames));
+                            classification, pointerCount, pointerProperties.data(),
+                            pointerCoords.data(), xPrecision, yPrecision, xCursorPosition,
+                            yCursorPosition, downTime, std::move(frames));
 }
 
 std::list<NotifyArgs> TouchInputMapper::cancelTouch(nsecs_t when, nsecs_t readTime) {

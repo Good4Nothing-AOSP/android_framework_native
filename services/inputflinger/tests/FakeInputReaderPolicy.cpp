@@ -216,6 +216,14 @@ void FakeInputReaderPolicy::setPointerGestureEnabled(bool enabled) {
     mConfig.pointerGesturesEnabled = enabled;
 }
 
+float FakeInputReaderPolicy::getPointerGestureMovementSpeedRatio() {
+    return mConfig.pointerGestureMovementSpeedRatio;
+}
+
+float FakeInputReaderPolicy::getPointerGestureZoomSpeedRatio() {
+    return mConfig.pointerGestureZoomSpeedRatio;
+}
+
 void FakeInputReaderPolicy::setVelocityControlParams(const VelocityControlParameters& params) {
     mConfig.wheelVelocityControlParameters = params;
 }
